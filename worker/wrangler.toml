@@ -1,0 +1,15 @@
+name = "scrape-monitor"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+[triggers]
+crons = ["17 */6 * * *"]   # every 6 h at minute 17 (avoids top-of-hour rush)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "scrape-monitor"
+database_id = "8b4bec5e-9c9e-48c7-ab11-9ec3d920e3e4"
+migrations_dir = "../migrations"
+
+[vars]
+USER_AGENT = "cf-scrape-monitor/0.1 (+https://example.com/about)"
