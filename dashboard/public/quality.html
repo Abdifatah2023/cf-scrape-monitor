@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data quality · cf-scrape-monitor</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="quality">
+  <header class="top">
+    <a class="brand" href="index.html">cf-scrape-monitor</a>
+    <nav aria-label="Main">
+      <a href="index.html" data-page="overview">Overview</a>
+      <a href="changes.html" data-page="changes">Change feed</a>
+      <a href="item.html" data-page="item">Items</a>
+      <a href="quality.html" data-page="quality">Data quality</a>
+      <a href="about.html" data-page="about">About</a>
+    </nav>
+    <span class="meta" id="generated"></span>
+  </header>
+
+  <main>
+    <div>
+      <h1>Data quality</h1>
+      <p class="sub">Records that failed schema validation, and pages the scraper couldn't fetch or wasn't allowed to fetch.</p>
+    </div>
+
+    <section class="card">
+      <h2>Validation failures by issue</h2>
+      <p class="sub">Grouped by target, field and Zod issue.</p>
+      <div id="groups"></div>
+    </section>
+
+    <section class="card">
+      <h2>Most recent failing records</h2>
+      <div id="recent-errors"></div>
+    </section>
+
+    <section class="card">
+      <h2>Fetch problems</h2>
+      <p class="sub">Failed requests, pages that parsed to nothing, and robots.txt skips (last 100 runs).</p>
+      <div id="fetch-problems"></div>
+    </section>
+  </main>
+</body>
+</html>

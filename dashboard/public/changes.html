@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Change feed · cf-scrape-monitor</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="changes">
+  <header class="top">
+    <a class="brand" href="index.html">cf-scrape-monitor</a>
+    <nav aria-label="Main">
+      <a href="index.html" data-page="overview">Overview</a>
+      <a href="changes.html" data-page="changes">Change feed</a>
+      <a href="item.html" data-page="item">Items</a>
+      <a href="quality.html" data-page="quality">Data quality</a>
+      <a href="about.html" data-page="about">About</a>
+    </nav>
+    <span class="meta" id="generated"></span>
+  </header>
+
+  <main>
+    <div>
+      <h1>Change feed</h1>
+      <p class="sub">Every field-level change the scraper has detected, newest first.</p>
+    </div>
+
+    <form id="filters" class="filters" onsubmit="return false">
+      <label>Time range
+        <select name="range">
+          <option value="24">Last 24 hours</option>
+          <option value="168">Last 7 days</option>
+          <option value="720">Last 30 days</option>
+          <option value="" selected>All time</option>
+        </select>
+      </label>
+      <label>Target
+        <select name="target"><option value="">All targets</option></select>
+      </label>
+      <label>Kind
+        <select name="kind">
+          <option value="">Any kind</option>
+          <option value="added">Added</option>
+          <option value="updated">Updated</option>
+          <option value="removed">Removed</option>
+        </select>
+      </label>
+      <label>Field
+        <select name="field">
+          <option value="">Any field</option>
+          <option value="price">price</option>
+          <option value="in_stock">in_stock</option>
+          <option value="rating">rating</option>
+          <option value="title">title</option>
+          <option value="tags">tags</option>
+          <option value="text">text</option>
+          <option value="author">author</option>
+        </select>
+      </label>
+    </form>
+
+    <section class="card">
+      <div id="feed"></div>
+      <p><button id="more" type="button" hidden>Load more</button></p>
+    </section>
+  </main>
+</body>
+</html>

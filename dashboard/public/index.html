@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overview · cf-scrape-monitor</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body data-page="overview">
+  <header class="top">
+    <a class="brand" href="index.html">cf-scrape-monitor</a>
+    <nav aria-label="Main">
+      <a href="index.html" data-page="overview">Overview</a>
+      <a href="changes.html" data-page="changes">Change feed</a>
+      <a href="item.html" data-page="item">Items</a>
+      <a href="quality.html" data-page="quality">Data quality</a>
+      <a href="about.html" data-page="about">About</a>
+    </nav>
+    <span class="meta" id="generated"></span>
+  </header>
+
+  <main>
+    <div>
+      <h1>Overview</h1>
+      <p class="sub">A Cloudflare Worker scrapes public practice sites every 6 hours and records what changed.</p>
+    </div>
+
+    <section id="tiles" class="tiles" aria-label="Key figures"></section>
+
+    <section id="last-run-notes" class="card error-banner" hidden></section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Runs over time</h2>
+          <p class="sub">Changes found per run, colored by run status (last 60 runs)</p>
+        </div>
+        <div id="runs-legend" class="legend"></div>
+      </div>
+      <div class="chart-box"><canvas id="runs-chart" role="img" aria-label="Column chart of changes found per scrape run, colored by run status. A table view follows."></canvas></div>
+      <details class="table-view"><summary>Show as table</summary><div id="runs-table"></div></details>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Latest changes</h2>
+        <a href="changes.html">Full change feed →</a>
+      </div>
+      <div id="latest-changes"></div>
+    </section>
+  </main>
+</body>
+</html>

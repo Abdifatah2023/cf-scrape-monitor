@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About this crawler · cf-scrape-monitor</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="about">
+  <header class="top">
+    <a class="brand" href="index.html">cf-scrape-monitor</a>
+    <nav aria-label="Main">
+      <a href="index.html" data-page="overview">Overview</a>
+      <a href="changes.html" data-page="changes">Change feed</a>
+      <a href="item.html" data-page="item">Items</a>
+      <a href="quality.html" data-page="quality">Data quality</a>
+      <a href="about.html" data-page="about">About</a>
+    </nav>
+  </header>
+
+  <main class="prose">
+    <h1>About this crawler</h1>
+    <p>
+      <strong>cf-scrape-monitor</strong> is a small, non-commercial monitoring project. If you see the
+      User-Agent <code>cf-scrape-monitor/0.1</code> in your logs, the request came from here.
+    </p>
+
+    <h2>What it fetches</h2>
+    <ul>
+      <li><a href="https://books.toscrape.com">books.toscrape.com</a>: the first 3 catalogue pages (title, price, availability, rating)</li>
+      <li><a href="https://quotes.toscrape.com">quotes.toscrape.com</a>: the first page (quote text, author, tags)</li>
+    </ul>
+    <p>Both sites exist for scraping practice.</p>
+
+    <h2>How it behaves</h2>
+    <ul>
+      <li>Runs at most every 6 hours (at minute 17).</li>
+      <li>Reads and obeys <code>robots.txt</code>, re-checked every 24 hours.</li>
+      <li>Sends one request at a time per host, with a 1.5 s pause between requests.</li>
+      <li>Uses conditional requests (<code>If-None-Match</code> / <code>If-Modified-Since</code>), so an unchanged page costs only a <code>304</code>.</li>
+      <li>Backs off on <code>429</code> and <code>5xx</code>, honors <code>Retry-After</code>, and retries at most once.</li>
+      <li>Collects no personal data.</li>
+    </ul>
+
+    <h2>Opting out</h2>
+    <p>
+      Disallow <code>cf-scrape-monitor</code> in your <code>robots.txt</code>. The crawler re-reads it at least
+      every 24 hours and skips any disallowed path.
+    </p>
+  </main>
+</body>
+</html>

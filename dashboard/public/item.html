@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Items · cf-scrape-monitor</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body data-page="item">
+  <header class="top">
+    <a class="brand" href="index.html">cf-scrape-monitor</a>
+    <nav aria-label="Main">
+      <a href="index.html" data-page="overview">Overview</a>
+      <a href="changes.html" data-page="changes">Change feed</a>
+      <a href="item.html" data-page="item">Items</a>
+      <a href="quality.html" data-page="quality">Data quality</a>
+      <a href="about.html" data-page="about">About</a>
+    </nav>
+    <span class="meta" id="generated"></span>
+  </header>
+
+  <main>
+    <section id="browser">
+      <div>
+        <h1>Items</h1>
+        <p class="sub">Everything being tracked. Pick an item to see its history.</p>
+      </div>
+      <form id="item-filters" class="filters" style="margin: 16px 0">
+        <label>Target
+          <select name="target"><option value="">All targets</option></select>
+        </label>
+        <label>Search
+          <input type="search" name="q" placeholder="Title or quote text" autocomplete="off">
+        </label>
+      </form>
+      <div class="card"><div id="items"></div></div>
+    </section>
+
+    <section id="detail" hidden>
+      <div>
+        <p><a href="item.html">← All items</a></p>
+        <h1 id="item-title"></h1>
+        <p class="sub" id="item-meta"></p>
+      </div>
+
+      <section class="card" id="chart-card" style="margin-top: 20px">
+        <div class="card-head">
+          <h2 id="chart-title">History</h2>
+          <form class="filters" onsubmit="return false"><label>Field <select id="field"></select></label></form>
+        </div>
+        <div class="chart-box"><canvas id="history-chart" role="img" aria-label="Step line chart of this field over time. A table view follows."></canvas></div>
+        <details class="table-view"><summary>Show as table</summary><div id="history-table"></div></details>
+      </section>
+
+      <div class="split" style="margin-top: 20px">
+        <section class="card">
+          <h2>Snapshot timeline</h2>
+          <p class="sub">A snapshot is stored only when the record's hash changes.</p>
+          <div id="snapshots"></div>
+        </section>
+        <section class="card">
+          <h2>Changes</h2>
+          <div id="item-changes"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
