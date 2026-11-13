@@ -1,6 +1,8 @@
 name = "scrape-monitor"
 main = "src/index.ts"
 compatibility_date = "2026-11-01"
+workers_dev = true
+preview_urls = false
 
 [triggers]
 crons = ["17 */6 * * *"]   # every 6 h at minute 17 (avoids top-of-hour rush)
@@ -12,4 +14,4 @@ database_id = "8b4bec5e-9c9e-48c7-ab11-9ec3d920e3e4"
 migrations_dir = "../migrations"
 
 [vars]
-USER_AGENT = "cf-scrape-monitor/0.1 (+https://example.com/about)"
+USER_AGENT = "cf-scrape-monitor/0.1 (+https://scrape-monitor-dashboard.scrape-monitor-worker.workers.dev/about.html)"
