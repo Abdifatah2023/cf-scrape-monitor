@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<!-- Deliberately broken catalogue page (Milestone 2): 1 good book, 3 that must fail validation. -->
+<html lang="en-us">
+<body>
+<ol class="row">
+  <li>
+    <article class="product_pod">
+      <p class="star-rating Four"><i class="icon-star"></i></p>
+      <h3><a href="good-book_1/index.html" title="A Perfectly Good Book">A Perfectly Good ...</a></h3>
+      <div class="product_price">
+        <p class="price_color">£10.00</p>
+        <p class="instock availability"><i class="icon-ok"></i> In stock </p>
+      </div>
+    </article>
+  </li>
+  <li>
+    <!-- price has no digits -->
+    <article class="product_pod">
+      <p class="star-rating Two"><i class="icon-star"></i></p>
+      <h3><a href="bad-price_2/index.html" title="Bad Price">Bad Price</a></h3>
+      <div class="product_price">
+        <p class="price_color">£N/A</p>
+        <p class="instock availability"> In stock </p>
+      </div>
+    </article>
+  </li>
+  <li>
+    <!-- rating word is not One..Five -->
+    <article class="product_pod">
+      <p class="star-rating Zero"><i class="icon-star"></i></p>
+      <h3><a href="bad-rating_3/index.html" title="Bad Rating">Bad Rating</a></h3>
+      <div class="product_price">
+        <p class="price_color">£12.50</p>
+        <p class="instock availability"> In stock </p>
+      </div>
+    </article>
+  </li>
+  <li>
+    <!-- missing link and title -->
+    <article class="product_pod">
+      <p class="star-rating One"><i class="icon-star"></i></p>
+      <h3></h3>
+      <div class="product_price">
+        <p class="price_color">£9.99</p>
+        <p class="instock availability"> Out of stock </p>
+      </div>
+    </article>
+  </li>
+</ol>
+</body>
+</html>
