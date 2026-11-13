@@ -267,3 +267,5 @@ visible. The live dashboard fills in as the cron runs.
 - books.toscrape.com is static, so in practice the live dashboard mostly shows 304s. The change
   detection is exercised by the tests and the demo data.
 - Retention keeps `changes` and `runs` forever. They're small, but they grow.
+#   c f - s c r a p e - m o n i t o r  
+ 
