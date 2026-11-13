@@ -1,9 +1,12 @@
 {
   "name": "cf-scrape-monitor",
   "private": true,
-  "workspaces": ["worker"],
+  "workspaces": [
+    "worker",
+    "dashboard"
+  ],
   "scripts": {
     "test": "npm run test -w worker",
-    "typecheck": "npm run typecheck -w worker"
+    "typecheck": "npm run typecheck --workspaces"
   }
 }

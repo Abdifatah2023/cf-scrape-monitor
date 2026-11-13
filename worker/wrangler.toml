@@ -14,4 +14,4 @@ database_id = "8b4bec5e-9c9e-48c7-ab11-9ec3d920e3e4"
 migrations_dir = "../migrations"
 
 [vars]
-USER_AGENT = "cf-scrape-monitor/0.1 (+https://scrape-monitor-dashboard.scrape-monitor-worker.workers.dev/about.html)"
+USER_AGENT = "cf-scrape-monitor/0.1 (+https://scrape-monitor-dashboard.pages.dev/about)"

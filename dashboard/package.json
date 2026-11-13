@@ -1,0 +1,11 @@
+{
+  "name": "scrape-monitor-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev --persist-to ../worker/.wrangler/state --port 8788",
+    "deploy": "wrangler pages deploy",
+    "typecheck": "tsc --noEmit"
+  }
+}
