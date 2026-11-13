@@ -1,5 +1,11 @@
+import { maybeAlert } from "./alert";
 import type { Env } from "./env";
 import { runPipeline } from "./pipeline";
+import { runRetention } from "./retention";
+
+/** Cron expressions from wrangler.toml; scheduled() dispatches on event.cron. */
+export const CRON_SCRAPE = "17 */6 * * *";
+export const CRON_RETENTION = "43 3 * * *";
 
 /** Constant-time string comparison for the bearer token. */
 function safeEqual(a: string, b: string): boolean {
@@ -12,7 +18,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 export default {
-  async fetch(req, env): Promise<Response> {
+  async fetch(req, env, ctx): Promise<Response> {
     const url = new URL(req.url);
 
     // POST /run — manual trigger, protected by RUN_TOKEN (plan §4.3)
@@ -24,6 +30,7 @@ export default {
       if (!safeEqual(token, env.RUN_TOKEN)) return new Response("Unauthorized", { status: 401 });
 
       const summary = await runPipeline(env, "manual");
+      ctx.waitUntil(maybeAlert(env, summary));
       return Response.json(summary);
     }
 
@@ -37,6 +44,11 @@ export default {
 
   async scheduled(event, env, ctx): Promise<void> {
     console.log(`cron fired: ${event.cron}`);
-    ctx.waitUntil(runPipeline(env, "cron"));
+    if (event.cron === CRON_RETENTION) {
+      ctx.waitUntil(runRetention(env.DB));
+      return;
+    }
+    // CRON_SCRAPE (and anything unexpected) scrapes
+    ctx.waitUntil(runPipeline(env, "cron").then((summary) => maybeAlert(env, summary)));
   },
 } satisfies ExportedHandler<Env>;

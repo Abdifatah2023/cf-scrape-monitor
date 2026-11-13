@@ -5,7 +5,7 @@ workers_dev = true
 preview_urls = false
 
 [triggers]
-crons = ["17 */6 * * *"]   # every 6 h at minute 17 (avoids top-of-hour rush)
+crons = ["17 */6 * * *", "43 3 * * *"]   # scrape every 6 h at :17; retention daily at 03:43 UTC
 
 [[d1_databases]]
 binding = "DB"

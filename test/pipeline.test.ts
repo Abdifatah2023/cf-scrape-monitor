@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { runPipeline } from "../worker/src/pipeline";
+import { books } from "../worker/src/targets/books";
 import { BOOK_PAGES, BOOKS, count, fakeNet, html200, PAGE, resetDb } from "./helpers";
 
 import broken from "./fixtures/books-broken.html?raw";
@@ -10,7 +11,7 @@ beforeEach(resetDb);
 describe("Milestone 1: first run", () => {
   it("writes all 60 books as items, snapshots and 'added' changes", async () => {
     const net = fakeNet();
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
 
     expect(s.status).toBe("ok");
     expect(s.pagesFetched).toBe(3);
@@ -29,7 +30,7 @@ describe("Milestone 2: validation", () => {
   it("stores invalid records in validation_errors and keeps going", async () => {
     const net = fakeNet();
     net.route(PAGE(2), broken);
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
 
     expect(s.status).toBe("ok"); // bad records are not a failed run
     expect(s.recordsInvalid).toBe(3);
@@ -50,8 +51,8 @@ describe("Milestone 2: validation", () => {
 
 describe("Milestone 3: change detection", () => {
   it("a second run with unchanged data writes 0 snapshots and 0 changes", async () => {
-    await runPipeline(env, "cron", fakeNet().deps);
-    const s2 = await runPipeline(env, "cron", fakeNet().deps);
+    await runPipeline(env, "cron", fakeNet().deps, [books]);
+    const s2 = await runPipeline(env, "cron", fakeNet().deps, [books]);
 
     expect(s2.changesFound).toBe(0);
     expect(await count("snapshots")).toBe(60);
@@ -60,7 +61,7 @@ describe("Milestone 3: change detection", () => {
   });
 
   it("a modified fixture writes one change row per changed field", async () => {
-    await runPipeline(env, "cron", fakeNet().deps);
+    await runPipeline(env, "cron", fakeNet().deps, [books]);
 
     const net = fakeNet();
     // A Light in the Attic: price 51.77 → 45.00 and goes out of stock
@@ -69,7 +70,7 @@ describe("Milestone 3: change detection", () => {
       .replace(/(£45\.00<\/p>\s*<p class="instock availability">\s*<i class="icon-ok"><\/i>\s*)In stock/, "$1Out of stock");
     expect(modified).not.toBe(BOOK_PAGES[PAGE(1)]);
     net.route(PAGE(1), modified);
-    const s2 = await runPipeline(env, "cron", net.deps);
+    const s2 = await runPipeline(env, "cron", net.deps, [books]);
 
     const { results } = await env.DB.prepare(
       "SELECT kind, field, old_value, new_value FROM changes WHERE run_id = ? ORDER BY field",
@@ -85,44 +86,44 @@ describe("Milestone 3: change detection", () => {
   });
 
   it("marks items removed only when every page was fetched cleanly", async () => {
-    await runPipeline(env, "cron", fakeNet().deps);
+    await runPipeline(env, "cron", fakeNet().deps, [books]);
 
     // page 3 now lists only its first 5 books → 15 removed
     const net = fakeNet();
     const parts = BOOK_PAGES[PAGE(3)].split('<article class="product_pod">');
     net.route(PAGE(3), [parts[0], ...parts.slice(1, 6)].join('<article class="product_pod">') + "</ol></body></html>");
-    const s2 = await runPipeline(env, "cron", net.deps);
+    const s2 = await runPipeline(env, "cron", net.deps, [books]);
     expect(await count("changes", `run_id = ${s2.runId} AND kind = 'removed'`)).toBe(15);
     expect(await count("items", "removed_at IS NOT NULL")).toBe(15);
 
     // reported once, not on every later run
-    const s3 = await runPipeline(env, "cron", net.deps);
+    const s3 = await runPipeline(env, "cron", net.deps, [books]);
     expect(await count("changes", `run_id = ${s3.runId}`)).toBe(0);
 
     // they come back → 'added' again
-    const s4 = await runPipeline(env, "cron", fakeNet().deps);
+    const s4 = await runPipeline(env, "cron", fakeNet().deps, [books]);
     expect(await count("changes", `run_id = ${s4.runId} AND kind = 'added'`)).toBe(15);
     expect(await count("items", "removed_at IS NOT NULL")).toBe(0);
   });
 
   it("ignores provenance: a book moving to another page is not a change", async () => {
-    await runPipeline(env, "cron", fakeNet().deps);
+    await runPipeline(env, "cron", fakeNet().deps, [books]);
     const net = fakeNet();
     // swap pages 1 and 2
     net.route(PAGE(1), BOOK_PAGES[PAGE(2)]);
     net.route(PAGE(2), BOOK_PAGES[PAGE(1)]);
-    const s2 = await runPipeline(env, "cron", net.deps);
+    const s2 = await runPipeline(env, "cron", net.deps, [books]);
     expect(s2.changesFound).toBe(0);
   });
 });
 
 describe("Failure cases", () => {
   it("500 → retried once, then the page fails; items on it are NOT marked removed", async () => {
-    await runPipeline(env, "cron", fakeNet().deps);
+    await runPipeline(env, "cron", fakeNet().deps, [books]);
 
     const net = fakeNet();
     net.route(PAGE(2), () => new Response("boom", { status: 500 }));
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
 
     expect(net.calls.filter((c) => c.url === PAGE(2))).toHaveLength(2); // original + 1 retry
     expect(s.status).toBe("failed"); // the only enabled target failed
@@ -138,7 +139,7 @@ describe("Failure cases", () => {
     const net = fakeNet();
     let n = 0;
     net.route(PAGE(1), () => (n++ === 0 ? new Response("", { status: 503 }) : html200(BOOK_PAGES[PAGE(1)])));
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
     expect(s.status).toBe("ok");
     expect(s.recordsValid).toBe(60);
     expect(net.sleeps).toContain(2000); // backoff
@@ -150,7 +151,7 @@ describe("Failure cases", () => {
     net.route(PAGE(1), () =>
       n++ === 0 ? new Response("", { status: 429, headers: { "retry-after": "7" } }) : html200(BOOK_PAGES[PAGE(1)]),
     );
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
     expect(s.status).toBe("ok");
     expect(net.sleeps).toContain(7000);
   });
@@ -160,7 +161,7 @@ describe("Failure cases", () => {
     net.route(PAGE(3), () => {
       throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
     });
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
     expect(net.calls.filter((c) => c.url === PAGE(3))).toHaveLength(2);
     expect(s.notes).toEqual(expect.arrayContaining([expect.objectContaining({ message: "fetch failed: timed out after 10 s" })]));
     expect(s.recordsValid).toBe(40);
@@ -171,7 +172,7 @@ describe("Failure cases", () => {
     for (const [url, html] of Object.entries(BOOK_PAGES)) {
       net1.route(url, () => html200(html, { etag: `"v1-${url.slice(-6)}"`, "last-modified": "Wed, 08 Feb 2023 21:02:32 GMT" }));
     }
-    await runPipeline(env, "cron", net1.deps);
+    await runPipeline(env, "cron", net1.deps, [books]);
 
     const net2 = fakeNet();
     for (const url of Object.keys(BOOK_PAGES)) {
@@ -179,7 +180,7 @@ describe("Failure cases", () => {
         req.headers["if-none-match"] === `"v1-${url.slice(-6)}"` ? new Response(null, { status: 304 }) : html200("changed?"),
       );
     }
-    const s = await runPipeline(env, "cron", net2.deps);
+    const s = await runPipeline(env, "cron", net2.deps, [books]);
 
     const pageCalls = net2.calls.filter((c) => c.url.includes("/catalogue/"));
     expect(pageCalls.every((c) => c.headers["if-modified-since"] === "Wed, 08 Feb 2023 21:02:32 GMT")).toBe(true);
@@ -190,10 +191,10 @@ describe("Failure cases", () => {
   });
 
   it("malformed HTML (0 records) is a failure, not a mass deletion", async () => {
-    await runPipeline(env, "cron", fakeNet().deps);
+    await runPipeline(env, "cron", fakeNet().deps, [books]);
     const net = fakeNet();
     net.route(PAGE(1), "<html><body><h1>Down for maintenance</h1><div");
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
     expect(s.status).toBe("failed");
     expect(await count("changes", "kind = 'removed'")).toBe(0);
     expect(s.notes).toEqual(expect.arrayContaining([expect.objectContaining({ message: "page parsed to 0 records" })]));
@@ -202,7 +203,7 @@ describe("Failure cases", () => {
   it("robots.txt disallow → page skipped and the reason recorded", async () => {
     const net = fakeNet();
     net.route(`${BOOKS}/robots.txt`, () => new Response("User-agent: *\nDisallow: /catalogue/page-2.html\n"));
-    const s = await runPipeline(env, "cron", net.deps);
+    const s = await runPipeline(env, "cron", net.deps, [books]);
 
     expect(net.calls.some((c) => c.url === PAGE(2))).toBe(false);
     expect(s.recordsValid).toBe(40);
@@ -213,8 +214,8 @@ describe("Failure cases", () => {
 
   it("robots.txt is cached for 24 h (fetched once across runs)", async () => {
     const net = fakeNet();
-    await runPipeline(env, "cron", net.deps);
-    await runPipeline(env, "cron", net.deps);
+    await runPipeline(env, "cron", net.deps, [books]);
+    await runPipeline(env, "cron", net.deps, [books]);
     expect(net.calls.filter((c) => c.url.endsWith("/robots.txt"))).toHaveLength(1);
   });
 });
@@ -222,7 +223,7 @@ describe("Failure cases", () => {
 describe("Milestone 4: politeness", () => {
   it("sends the identifying User-Agent on every request", async () => {
     const net = fakeNet();
-    await runPipeline(env, "cron", net.deps);
+    await runPipeline(env, "cron", net.deps, [books]);
     expect(net.calls.length).toBeGreaterThan(0);
     expect(net.calls.every((c) => c.headers["user-agent"] === env.USER_AGENT)).toBe(true);
   });
@@ -241,7 +242,7 @@ describe("Milestone 4: politeness", () => {
       });
     }
     const delayed = { ...env, REQUEST_DELAY_MS: "1500" };
-    await runPipeline(delayed, "cron", net.deps);
+    await runPipeline(delayed, "cron", net.deps, [books]);
     expect(maxInFlight).toBe(1);
     // robots + 3 pages to one host → 3 waits, each close to 1500 ms
     expect(net.sleeps).toHaveLength(3);
