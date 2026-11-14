@@ -1,11 +1,8 @@
 import { maybeAlert } from "./alert";
+import { CRON_RETENTION } from "./crons";
 import type { Env } from "./env";
 import { runPipeline } from "./pipeline";
 import { runRetention } from "./retention";
-
-/** Cron expressions from wrangler.toml; scheduled() dispatches on event.cron. */
-export const CRON_SCRAPE = "17 */6 * * *";
-export const CRON_RETENTION = "43 3 * * *";
 
 /** Constant-time string comparison for the bearer token. */
 function safeEqual(a: string, b: string): boolean {

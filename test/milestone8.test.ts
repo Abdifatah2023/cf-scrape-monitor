@@ -1,7 +1,8 @@
 import { createExecutionContext, createScheduledController, env, waitOnExecutionContext } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { alertReasons, maybeAlert } from "../worker/src/alert";
-import worker, { CRON_RETENTION } from "../worker/src/index";
+import { CRON_RETENTION } from "../worker/src/crons";
+import worker from "../worker/src/index";
 import { runPipeline, type RunSummary } from "../worker/src/pipeline";
 import { runRetention } from "../worker/src/retention";
 import { count, fakeNet, PAGE, resetDb } from "./helpers";
