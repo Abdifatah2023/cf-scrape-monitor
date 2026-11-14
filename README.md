@@ -4,11 +4,6 @@ A scheduled Cloudflare Worker scrapes a small set of public pages, validates wha
 against strict schemas, saves a new snapshot only when the data has changed, and serves a
 dashboard showing what changed and when.
  
-This is the cloud version of `polite-scraper`: the same
-fetch → extract → normalize → validate → store → report pipeline, but on a schedule and with history.
- 
-- **Dashboard:** https://scrape-monitor-dashboard.pages.dev
-- **Scraper:** https://scrape-monitor.scrape-monitor-worker.workers.dev (only `POST /run` with a token does anything)
 ## Architecture
  
 ```mermaid
@@ -21,56 +16,11 @@ flowchart LR
   end
   D -->|batched writes| DB[(D1<br/>scrape-monitor)]
   V -->|invalid records| DB
-  W -.->|optional| A[alert webhook]
   DB -->|SELECT only| API["Pages Functions<br/>/api/*"]
   API --> UI["Pages dashboard<br/>Overview · Change feed · Items · Data quality"]
 ```
  
-## Status
  
-| # | Milestone | Status | Evidence |
-|---|---|---|---|
-| 0 | Setup | ☑ | D1 `scrape-monitor` created; migrations applied locally and remotely |
-| 1 | Single target, local | ☑ | `wrangler dev --test-scheduled` + `/__scheduled` wrote 60 books to local D1 |
-| 2 | Validation | ☑ | strict Zod schemas; `test/fixtures/books-broken.html` → 3 rows in `validation_errors` |
-| 3 | Change detection | ☑ | unchanged second run: 0 snapshots; modified fixture: one `changes` row per field |
-| 4 | Politeness | ☑ | robots.txt, conditional requests, per-host delay, retry/backoff + `Retry-After`, User-Agent |
-| 5 | Deploy scraper | ☑ | deployed with cron; first remote run stored 60 books |
-| 6 | Dashboard API | ☑ | Pages Functions bound to the same D1, JSON + `Cache-Control: max-age=60` |
-| 7 | Dashboard UI | ☑ | overview, change feed, item history chart, data-quality view |
-| 8 | Second target + hardening | ☑ | quotes target, per-target isolation, retention cron, webhook alerting |
-| 9 | Docs | ☑ | this README |
- 
-All of the above is covered by 58 tests (`npm test`).
- 
-## Target classification
- 
-### books.toscrape.com
- 
-- **Site:** https://books.toscrape.com, a public sandbox built for practising scraping
-  (see https://toscrape.com).
-- **Why:** prices and stock are exactly the kind of data a change monitor tracks, and the site
-  exists so people can practise on it.
-- **Scope:** the first 3 catalogue pages only (60 books). No per-book detail pages.
-- **Data collected:** title, product URL, price, availability (in stock yes/no), star rating
-  (1–5), plus provenance (source page). Item key: product URL.
-- **robots.txt check:** requested `https://books.toscrape.com/robots.txt` on 2026-11-11 and
-  got `404`, so no robots file was found. The Worker re-checks it every 24 h and obeys it if
-  one appears.
-- **Why this is appropriate:** it's a practice site that invites scraping, we read 3 pages
-  at most every 6 hours using conditional requests, and no personal data is involved.
-### quotes.toscrape.com
- 
-- **Site:** https://quotes.toscrape.com, a sister sandbox from the same project.
-- **Why:** a second, differently shaped target (lists of tags, no per-item URL) shows the
-  per-target modules and isolation working.
-- **Scope:** the first page only (10 quotes).
-- **Data collected:** quote text, author name, tags (lowercased, sorted), plus provenance.
-  Item key: `author: text`.
-- **robots.txt check:** requested `https://quotes.toscrape.com/robots.txt` on 2026-11-11 and
-  got `404`, so no robots file was found. It's re-checked every 24 h.
-- **Why this is appropriate:** same reasons as above. Author names are those of famous
-  published authors, not personal data about users.
 ## Repository layout
  
 ```text
@@ -223,32 +173,5 @@ visible. The live dashboard fills in as the cron runs.
 | **Item history** | **Data quality** |
 | ![Item history](docs/screenshots/item-history.png) | ![Data quality](docs/screenshots/data-quality.png) |
  
-## Ethics and politeness checklist
- 
-- [x] Only scrape targets whose robots.txt and terms allow it, documented per target (above)
-- [x] Use an identifying User-Agent with an about URL (`/about` on the dashboard)
-- [x] Scrape no more often than every 6 h, one request at a time, with conditional requests
-- [x] Collect no personal data
-- [x] Back off on 429/503 and respect `Retry-After`
-## Differences from PLAN.md
- 
-- **Test tooling:** `@cloudflare/vitest-pool-workers` was renamed to `@cloudflare/vitest-plugin`,
-  and it no longer ships `fetchMock`. The pipeline takes an injectable `fetch`/`sleep`/`now`
-  instead, which also keeps the delay and backoff tests instant.
-- **npm workspaces** at the root, so `test/` can sit beside `worker/` and `dashboard/`.
-- **Extra migrations:** `0002` seeds `targets` (needed by the foreign key), `0003` adds
-  `items.removed_at` (report a removal once), `0004` adds `robots_cache` and `runs.notes` (to
-  "record why" a page was skipped or failed).
-- **`runs.pages_fetched`** counts pages that returned content (200). 304s appear in
-  `runs.notes` as info.
-- **Extra endpoints:** `/api/items` (item browser) and `/api/targets`.
-- **Chart.js** is vendored in `dashboard/public/vendor/` instead of loaded from a CDN.
-- **Dashboard access:** public, read-only. Putting it behind Cloudflare Access is a dashboard setting.
-## Limitations
- 
-- The runs chart is dominated by the first run (every item is `added` once). After that, the
-  bars show real updates.
-- books.toscrape.com is static, so in practice the live dashboard mostly shows 304s. The change
-  detection is exercised by the tests and the demo data.
-- Retention keeps `changes` and `runs` forever. They're small, but they grow.
+
  
